@@ -106,15 +106,15 @@ run_bootstrap_second_stage() {
 	return_value=$?
 	if [ $return_value -ne 0 ]; then
 		if [ $return_value -eq 1 ] && [[ "$output" == *"File exists"* ]]; then
-			log "Termux bootstrap 第二阶段已经运行过，无法再次运行。"
-			log "如果您仍想强制再次运行（不推荐），\
-比如在之前失败的情况下必须重新运行以进行测试，\
-请手动删除 '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR@/@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@.lock' \
-文件，然后再次运行 '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@'。"
+			log "The termux bootstrap second stage has already been run before and cannot be run again."
+			log "If you still want to force run it again (not recommended), \
+like in case of previous failure and it must be re-run again for testing, \
+then delete the '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR@/@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@.lock' \
+file manually and run '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@' again."
 			return 0
 		else
 			log_error "$output"
-			log_error "无法为 termux bootstrap 第二阶段创建锁文件：\
+			log_error "Failed to create lock file for termux bootstrap second stage at \
 '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_DIR@/@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@.lock'"
 			warn_if_process_killed "$return_value" "ln"
 			return $return_value
@@ -122,15 +122,15 @@ run_bootstrap_second_stage() {
 	fi
 
 
-	log "正在运行 Termux bootstrap 第二阶段"
+	log "Running termux bootstrap second stage"
 	run_bootstrap_second_stage_inner
 	return_value=$?
 	if [ $return_value -ne 0 ]; then
-		log_error "运行 termux bootstrap 第二阶段失败"
+		log_error "Failed to run termux bootstrap second stage"
 		return $return_value
 	fi
 
-	log "Termux bootstrap 第二阶段安装成功完成"
+	log "The termux bootstrap second stage completed successfully"
 
 
 	return 0
@@ -141,11 +141,11 @@ run_bootstrap_second_stage_inner() {
 
 	local return_value
 
-	log "正在运行软件包 postinst 维护脚本"
+	log "Running postinst maintainer scripts"
 	run_package_postinst_maintainer_scripts
 	return_value=$?
 	if [ $return_value -ne 0 ]; then
-		log_error "运行 postinst 维护脚本失败"
+		log_error "Failed to run postinst maintainer scripts"
 		return $return_value
 	fi
 
@@ -175,7 +175,7 @@ run_package_postinst_maintainer_scripts() {
 
 			dpkg_version=$(dpkg --version | head -n 1 | sed -E 's/.*version ([^ ]+) .*/\1/')
 			if [[ ! "$dpkg_version" =~ ^[0-9].*$ ]]; then
-				log_error "无法找到 'dpkg' 版本"
+				log_error "Failed to find the 'dpkg' version"
 				log_error "$dpkg_version"
 				return 1
 			fi
@@ -202,7 +202,7 @@ run_package_postinst_maintainer_scripts() {
 				script_basename="${script_path##*/}"
 				package_name="${script_basename::-9}"
 
-				log "正在运行 '$package_name' 软件包 postinst"
+				log "Running '$package_name' package postinst"
 
 				# Execute permissions do not exist for maintainer
 				# scripts in bootstrap zips and since files are
@@ -277,7 +277,7 @@ run_package_postinst_maintainer_scripts() {
 					"$script_path" configure
 					return_value=$?
 					if [ $return_value -ne 0 ]; then
-						log_error "运行 '$package_name' 软件包 postinst 失败"
+						log_error "Failed to run '$package_name' package postinst"
 						exit $return_value
 					fi
 				) || return $?
@@ -312,11 +312,11 @@ run_package_postinst_maintainer_scripts() {
 				# Combine pkgver and pkgrel
 				package_version="$package_version_pkgver-$package_version_pkgrel"
 				if [[ ! "$package_version" =~ ^([0-9]+:)?[^-]+-[^-]+$ ]]; then
-					log_error "从 package_dir_basename '$package_dir_basename' 提取的 package_version '$package_version' 无效"
+					log_error "The package_version '$package_version' extracted from package_dir_basename '$package_dir_basename' is not valid"
 					return 1
 				fi
 
-				log "正在运行 '$package_dir_basename' 软件包 post_install"
+				log "Running '$package_dir_basename' package post_install"
 
 				(
 					# As per `pacman` install docs:
@@ -352,7 +352,7 @@ run_package_postinst_maintainer_scripts() {
 					source "$script_path"
 					return_value=$?
 					if [ $return_value -ne 0 ]; then
-						log_error "加载 '$package_dir_basename' 软件包 install 文件失败"
+						log_error "Failed to source '$package_dir_basename' package install install"
 						exit $return_value
 					fi
 
@@ -368,7 +368,7 @@ run_package_postinst_maintainer_scripts() {
 						post_install "$package_version"
 						return_value=$?
 						if [ $return_value -ne 0 ]; then
-							log_error "运行 '$package_dir_basename' 软件包 post_install 失败"
+							log_error "Failed to run '$package_dir_basename' package post_install"
 							exit $return_value
 						fi
 					fi
@@ -396,7 +396,7 @@ ensure_running_with_termux_uid() {
 	return_value=$?
 	if [ $return_value -ne 0 ]; then
 		log_error "$uid"
-		log_error "无法获取运行 '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@' 脚本的用户 uid"
+		log_error "Failed to get uid of the user running the '@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@' script"
 		warn_if_process_killed "$return_value" "uid"
 		# This gets triggered if `adb install -r --abi arm64-v8a termux-app_v*_universal.apk`
 		# is used to install Termux on a `x86_64` Android AVD where `getprop ro.product.cpu.abilist`
@@ -405,23 +405,23 @@ ensure_running_with_termux_uid() {
 		# Commands do work if full path is executed in the shell, but some will fail with following
 		# error if only the `basename` of commands is used to rely on `$PATH`.
 		if [[ "$uid" == *"Unable to get realpath of id"* ]]; then
-			log_error "您可能安装了错误的 ABI/架构变体的 @TERMUX_APP__NAME@ 应用 APK，\
-与设备不兼容。"
-			log_error "请卸载并重新安装正确的 @TERMUX_APP__NAME@ 应用 APK 变体。"
-			log_error "如果您不知道设备的正确 ABI/架构，\
-请安装 'universal' 通用变体。"
+			log_error "You have likely installed the wrong ABI/architecture variant \
+of the @TERMUX_APP__NAME@ app APK that is not compatible with the device."
+			log_error "Uninstall and reinstall the correct APK variant of the @TERMUX_APP__NAME@ app."
+			log_error "Install 'universal' variant if you do not know the correct \
+ABI/architecture of the device."
 		fi
 		return $return_value
 	fi
 
 	if [[ ! "$uid" =~ ^[0-9]+$ ]]; then
-		log_error "'id -u' 命令返回的 uid '$uid' 无效。"
+		log_error "The uid '$uid' returned by 'id -u' command is not valid."
 		return 1
 	fi
 
 	if [[ -n "$TERMUX__UID" ]] && [[ "$uid" != "$TERMUX__UID" ]]; then
-		log_error "@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@ 无法以 uid '$uid' 运行，\
-必须以 @TERMUX_APP__NAME@ 应用导出的 TERMUX__UID '$TERMUX__UID' 运行。"
+		log_error "@TERMUX_BOOTSTRAP__BOOTSTRAP_SECOND_STAGE_ENTRY_POINT_SUBFILE@ cannot be run as the uid '$uid' and \
+it must be run as the TERMUX__UID '$TERMUX__UID' exported by the @TERMUX_APP__NAME@ app."
 		return 1
 	fi
 
@@ -435,9 +435,9 @@ warn_if_process_killed() {
 	local command="${2:-}"
 
 	if [[ "$return_value" == "137" ]]; then
-		log_error "'$command' 命令显然被 SIGKILL (信号 9) 杀死。\
-这可能是由于您设备上安装的 Android 操作系统的安全策略所致。
-详情请查看 https://github.com/termux/termux-app/issues/4219"
+		log_error "The '$command' command was apparently killed with SIGKILL (signal 9). \
+This may have been due to the security policies of the Android OS installed on your device.
+Check https://github.com/termux/termux-app/issues/4219 for more info."
 		return 0
 	fi
 
