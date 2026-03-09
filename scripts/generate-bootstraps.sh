@@ -130,22 +130,33 @@ pull_package() {
 				ar x package.deb
 
 				# data.tar may have extension different from .xz
-				if [ -f "./data.tar.xz" ]; then
-					data_archive="data.tar.xz"
-				elif [ -f "./data.tar.gz" ]; then
-					data_archive="data.tar.gz"
-				else
-					echo "No data.tar.* found in '$package_name'."
+				# List all possible data archive files
+				data_archive=""
+				for ext in tar.xz tar.gz tar.zst tar; do
+					if [ -f "./data.${ext}" ]; then
+						data_archive="data.${ext}"
+						break
+					fi
+				done
+				
+				if [ -z "$data_archive" ]; then
+					echo "No data.tar.* found in '$package_name'. Files present:"
+					ls -la
 					exit 1
 				fi
 
 				# Do same for control.tar.
-				if [ -f "./control.tar.xz" ]; then
-					control_archive="control.tar.xz"
-				elif [ -f "./control.tar.gz" ]; then
-					control_archive="control.tar.gz"
-				else
-					echo "No control.tar.* found in '$package_name'."
+				control_archive=""
+				for ext in tar.xz tar.gz tar.zst tar; do
+					if [ -f "./control.${ext}" ]; then
+						control_archive="control.${ext}"
+						break
+					fi
+				done
+				
+				if [ -z "$control_archive" ]; then
+					echo "No control.tar.* found in '$package_name'. Files present:"
+					ls -la
 					exit 1
 				fi
 
