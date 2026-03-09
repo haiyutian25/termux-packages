@@ -65,6 +65,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Delete existing release if it exists
+          gh release delete ${{ steps.get_tag.outputs.tag_name }} --yes || true
+          git push origin :refs/tags/${{ steps.get_tag.outputs.tag_name }} || true
+          
+          # Create new release
           gh release create ${{ steps.get_tag.outputs.tag_name }} --title "Bootstrap archives for Termux application (apt.android-7)"
           for file in *.zip; do
             gh release upload ${{ steps.get_tag.outputs.tag_name }} "$file"
